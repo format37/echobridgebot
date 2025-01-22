@@ -6,9 +6,6 @@ import json
 import telebot
 from telebot.formatting import escape_markdown
 from datetime import datetime
-# from langchain.chat_models import ChatOpenAI
-# from langchain.memory import ConversationBufferMemory
-# from langchain.chains import ConversationChain
 from langchain_openai import ChatOpenAI
 
 # Initialize FastAPI
@@ -22,6 +19,7 @@ logger.setLevel(logging.INFO)
 # Load config
 with open('config.json') as config_file:
     config = json.load(config_file)
+    HISTORY_THRESHOLD = config.get('HISTORY_THRESHOLD', 4000)  # Default to 4000 chars if not specified
 
 # Set environment variables for LangSmith
 os.environ["LANGSMITH_TRACING"] = "true"
@@ -52,6 +50,39 @@ def user_access(message):
         users = f.read().splitlines()
     return str(message['from']['id']) in users
 
+def manage_chat_history(user_id: str, message_id: str, text: str):
+    """Manages chat history for a user, storing messages and pruning old ones."""
+    # Create user directory if it doesn't exist
+    user_dir = f'data/users/{user_id}'
+    os.makedirs(user_dir, exist_ok=True)
+
+    # Save current message
+    date = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f'{date}_{message_id}.txt'
+    with open(os.path.join(user_dir, filename), 'w', encoding='utf-8') as f:
+        f.write(text)
+
+    # Get all message files and their creation times
+    files = []
+    total_length = 0
+    for f in os.listdir(user_dir):
+        if f.endswith('.txt'):
+            filepath = os.path.join(user_dir, f)
+            with open(filepath, 'r', encoding='utf-8') as file:
+                content = file.read()
+                total_length += len(content)
+                files.append((filepath, os.path.getctime(filepath), content))
+
+    # Sort files by creation time (oldest first)
+    files.sort(key=lambda x: x[1])
+
+    # Remove oldest files until total length is below threshold
+    while total_length > HISTORY_THRESHOLD and files:
+        filepath, _, content = files[0]
+        total_length -= len(content)
+        os.remove(filepath)
+        files.pop(0)
+
 @app.post("/message")
 async def call_message(request: Request, authorization: str = Header(None)):
     message = await request.json()
@@ -68,6 +99,10 @@ async def call_message(request: Request, authorization: str = Header(None)):
 
     chat_id = message['chat']['id']
     text = message['text']
+    user_id = str(message['from']['id'])
+
+    # Store message in chat history
+    manage_chat_history(user_id, str(message['message_id']), text)
 
     # Handle /reset command
     if text == '/reset':

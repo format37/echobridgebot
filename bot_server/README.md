@@ -5,7 +5,8 @@
     "TOKEN": "",
     "OPENAI_API_KEY": "",
     "LANGSMITH_API_KEY": "",
-    "LANGSMITH_PROJECT": "echobridgebot"
+    "LANGSMITH_PROJECT": "echobridgebot",
+    "HISTORY_THRESHOLD": 4000
 }
 ```
 Where TOKEN is a telegram bot token

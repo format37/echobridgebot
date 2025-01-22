@@ -12,7 +12,7 @@ fi
 echo "Starting container..."
 sudo docker run -d \
     --name $CONTAINER_NAME \
-    -p 4222:4222 \
+    --network host \
     --restart unless-stopped \
     -v "$(pwd)/data:/server/data" \
     -v "$(pwd)/config.json:/server/config.json" \

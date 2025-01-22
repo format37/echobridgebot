@@ -18,6 +18,17 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+# Load config
+with open('config.json') as config_file:
+    config = json.load(config_file)
+
+# Set environment variables for LangSmith
+os.environ["LANGSMITH_TRACING"] = "true"
+os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
+os.environ["LANGSMITH_API_KEY"] = config["LANGSMITH_API_KEY"]
+os.environ["LANGSMITH_PROJECT"] = config["LANGSMITH_PROJECT"]
+os.environ["OPENAI_API_KEY"] = config["OPENAI_API_KEY"]
+
 # Configure Telegram bot API endpoints
 server_api_uri = 'http://localhost:8081/bot{0}/{1}'
 telebot.apihelper.API_URL = server_api_uri

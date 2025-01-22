@@ -6,9 +6,10 @@ import json
 import telebot
 from telebot.formatting import escape_markdown
 from datetime import datetime
-from langchain.chat_models import ChatOpenAI
-from langchain.memory import ConversationBufferMemory
-from langchain.chains import ConversationChain
+# from langchain.chat_models import ChatOpenAI
+# from langchain.memory import ConversationBufferMemory
+# from langchain.chains import ConversationChain
+from langchain_openai import ChatOpenAI
 
 # Initialize FastAPI
 app = FastAPI()
@@ -42,20 +43,9 @@ with open('config.json') as config_file:
     
 # Initialize OpenAI chat model
 llm = ChatOpenAI(
-    model_name="GPT-4o",
+    model_name="gpt-4",
     openai_api_key=config['OPENAI_API_KEY']
 )
-
-# Chat history storage
-chat_histories = {}
-
-def get_chat_history(chat_id):
-    if chat_id not in chat_histories:
-        chat_histories[chat_id] = ConversationChain(
-            llm=llm,
-            memory=ConversationBufferMemory()
-        )
-    return chat_histories[chat_id]
 
 def user_access(message):
     with open('data/users.txt') as f:
@@ -81,16 +71,13 @@ async def call_message(request: Request, authorization: str = Header(None)):
 
     # Handle /reset command
     if text == '/reset':
-        if chat_id in chat_histories:
-            del chat_histories[chat_id]
         return JSONResponse(content={
             "type": "text",
-            "body": "Chat history has been reset"
+            "body": "Command no longer needed - chat is stateless"
         })
 
-    # Process message with LangChain
-    chat_chain = get_chat_history(chat_id)
-    response = chat_chain.predict(input=text)
+    # Direct LLM call instead of using conversation chain
+    response = llm.invoke(text).content
 
     # Send response via Telegram
     try:

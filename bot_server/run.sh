@@ -8,6 +8,7 @@ sudo docker run -d \
     --name $CONTAINER_NAME \
     -p 4222:4222 \
     --restart unless-stopped \
+    -v "$(pwd)/data:/app/data" \
     $IMAGE_NAME
 
 # Check if container started successfully

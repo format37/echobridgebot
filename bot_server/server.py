@@ -31,7 +31,7 @@ with open('config.json') as config_file:
     
 # Initialize OpenAI chat model
 llm = ChatOpenAI(
-    model_name="gpt-4",
+    model_name="GPT-4o",
     openai_api_key=config['OPENAI_API_KEY']
 )
 

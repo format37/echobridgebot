@@ -9,9 +9,6 @@ IMAGE_NAME="echobridgebot_image"
 
 echo "Starting bot server deployment..."
 
-# Navigate to the bot_server directory
-cd ./bot_server || exit 1
-
 # Check if the container is already running
 if [ "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
     echo "Container is already running. Stopping and removing..."

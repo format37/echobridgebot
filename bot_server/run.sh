@@ -4,14 +4,14 @@ IMAGE_NAME="echobridgebot_image"
 
 # Run the container
 echo "Starting container..."
-docker run -d \
+sudo docker run -d \
     --name $CONTAINER_NAME \
     -p 4222:4222 \
     --restart unless-stopped \
     $IMAGE_NAME
 
 # Check if container started successfully
-if [ "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
+if [ "$(sudo docker ps -q -f name=$CONTAINER_NAME)" ]; then
     echo "Container started successfully!"
     echo "Bot server is running on port 4222"
 else

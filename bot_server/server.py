@@ -83,6 +83,31 @@ def manage_chat_history(user_id: str, message_id: str, text: str):
         os.remove(filepath)
         files.pop(0)
 
+def get_chat_history(user_id: str) -> str:
+    """Retrieves chat history for a user, sorted by timestamp."""
+    user_dir = f'data/users/{user_id}'
+    if not os.path.exists(user_dir):
+        return ""
+
+    # Get all message files and their creation times
+    files = []
+    for f in os.listdir(user_dir):
+        if f.endswith('.txt'):
+            filepath = os.path.join(user_dir, f)
+            files.append((filepath, os.path.getctime(filepath)))
+
+    # Sort files by creation time (oldest first)
+    files.sort(key=lambda x: x[1])
+
+    # Build chat history string
+    history = []
+    for filepath, _ in files:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = f.read()
+            history.append(content)
+
+    return "\n".join(history)
+
 @app.post("/message")
 async def call_message(request: Request, authorization: str = Header(None)):
     message = await request.json()
@@ -104,15 +129,18 @@ async def call_message(request: Request, authorization: str = Header(None)):
     # Store message in chat history
     manage_chat_history(user_id, str(message['message_id']), text)
 
-    # Handle /reset command
-    if text == '/reset':
-        return JSONResponse(content={
-            "type": "text",
-            "body": "Command no longer needed - chat is stateless"
-        })
+    # Get chat history and create prompt
+    chat_history = get_chat_history(user_id)
+    prompt = f"""Previous conversation:
+{chat_history}
 
-    # Direct LLM call instead of using conversation chain
-    response = llm.invoke(text).content
+Current message:
+{text}
+
+Please provide a response to the current message, taking into account the conversation history if relevant."""
+
+    # Direct LLM call with history context
+    response = llm.invoke(prompt).content
 
     # Send response via Telegram
     try:

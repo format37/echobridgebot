@@ -2,6 +2,12 @@
 CONTAINER_NAME="echobridgebot"
 IMAGE_NAME="echobridgebot_image"
 
+# Check if config.json exists
+if [ ! -f "$(pwd)/config.json" ]; then
+    echo "Error: config.json not found in the current directory"
+    exit 1
+fi
+
 # Run the container
 echo "Starting container..."
 sudo docker run -d \
@@ -9,6 +15,7 @@ sudo docker run -d \
     -p 4222:4222 \
     --restart unless-stopped \
     -v "$(pwd)/data:/app/data" \
+    -v "$(pwd)/config.json:/app/config.json" \
     $IMAGE_NAME
 
 # Check if container started successfully

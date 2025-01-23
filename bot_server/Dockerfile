@@ -3,7 +3,7 @@ WORKDIR /server
 COPY requirements.txt /server
 RUN pip3 install -r requirements.txt --no-cache-dir
 COPY api.json /server
-ENV GOOGLE_APPLICATION_CREDENTIALS="/app/api.json"
+ENV GOOGLE_APPLICATION_CREDENTIALS="/server/api.json"
 COPY stt.py /server
 COPY BCP-47.txt /server
 COPY greeting.txt /server

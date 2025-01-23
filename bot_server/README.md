@@ -28,8 +28,9 @@ sh compose.sh
 3. Return to echobridgebot/bot_server and run
 ```
 cd ../bots/echobridgebot/bot_server
-sh build.sh
-sh run.sh
-sh logs.sh
+chmod +x build.sh
+chmod +x run.sh
+chmod +x logs.sh
+sh build_and_run.sh
 ```
 4. Check that bot is able to answer

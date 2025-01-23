@@ -51,7 +51,7 @@ def user_access(message):
         users = f.read().splitlines()
     return str(message['from']['id']) in users
 
-def manage_chat_history(user_id: str, message_id: str, text: str, role: str = "user"):
+def manage_chat_history(user_id: str, message_id: str, text: str | dict, role: str = "user"):
     """Manages chat history for a user, storing messages and pruning old ones."""
     # Create user directory if it doesn't exist
     user_dir = f'data/users/{user_id}'
@@ -60,10 +60,17 @@ def manage_chat_history(user_id: str, message_id: str, text: str, role: str = "u
     # Save current message
     date = datetime.now().strftime('%Y%m%d_%H%M%S')
     filename = f'{date}_{message_id}.json'
-    message_data = {
-        "role": role,
-        "content": text
-    }
+    
+    if isinstance(text, dict):
+        message_data = {
+            "role": role,
+            "content": text
+        }
+    else:
+        message_data = {
+            "role": role,
+            "content": text
+        }
     
     with open(os.path.join(user_dir, filename), 'w', encoding='utf-8') as f:
         json.dump(message_data, f, ensure_ascii=False)
@@ -110,7 +117,15 @@ def get_chat_history(user_id: str) -> list:
     for filepath, _ in files:
         with open(filepath, 'r', encoding='utf-8') as f:
             message_data = json.load(f)
-            history.append((message_data['role'], message_data['content']))
+            if isinstance(message_data['content'], dict):
+                # Handle conversation format
+                history.extend([
+                    ("user", message_data['content']['user_message']),
+                    ("assistant", message_data['content']['assistant_response'])
+                ])
+            else:
+                # Handle legacy format
+                history.append((message_data['role'], message_data['content']))
 
     return history
 
@@ -155,8 +170,8 @@ async def call_message(request: Request, authorization: str = Header(None)):
         )
         return JSONResponse(content={"type": "empty", "body": ''})
 
-    # Store user message in chat history
-    manage_chat_history(user_id, str(message['message_id']), text, role="user")
+    # Store the user's message for later
+    user_message = text
 
     # Get chat history and create prompt template
     chat_history = get_chat_history(user_id)
@@ -178,8 +193,16 @@ async def call_message(request: Request, authorization: str = Header(None)):
     # Get response from LLM
     response = llm.invoke(prompt_value).content
 
-    # Store LLM response in chat history
-    manage_chat_history(user_id, f"{message['message_id']}_response", response, role="system")
+    # Store both user message and LLM response in a single file
+    manage_chat_history(
+        user_id, 
+        str(message['message_id']), 
+        {
+            "user_message": user_message,
+            "assistant_response": response
+        },
+        role="conversation"
+    )
 
     # Send response via Telegram
     try:

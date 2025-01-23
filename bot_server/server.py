@@ -189,12 +189,22 @@ def convert_audio_to_wav(input_path: str) -> str:
 def send_voice_message(chat_id, voice_file_path, reply_to_message_id=None):
     """Helper function to send voice messages via Telegram"""
     try:
-        with open(voice_file_path, 'rb') as voice_file:
+        # Convert WAV to OGG format
+        audio = AudioSegment.from_wav(voice_file_path)
+        ogg_path = voice_file_path.replace('.wav', '.ogg')
+        audio.export(ogg_path, format="ogg")
+        
+        # Send the OGG file
+        with open(ogg_path, 'rb') as voice_file:
             bot.send_voice(
                 chat_id,
                 voice_file,
                 reply_to_message_id=reply_to_message_id
             )
+            
+        # Clean up OGG file
+        os.remove(ogg_path)
+            
     except Exception as e:
         logger.error(f"Error sending voice message: {e}")
         raise

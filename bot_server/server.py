@@ -7,6 +7,7 @@ import telebot
 from telebot.formatting import escape_markdown
 from datetime import datetime
 from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 # Initialize FastAPI
 app = FastAPI()
@@ -83,11 +84,11 @@ def manage_chat_history(user_id: str, message_id: str, text: str):
         os.remove(filepath)
         files.pop(0)
 
-def get_chat_history(user_id: str) -> str:
-    """Retrieves chat history for a user, sorted by timestamp."""
+def get_chat_history(user_id: str) -> list:
+    """Retrieves chat history for a user as a list of message tuples."""
     user_dir = f'data/users/{user_id}'
     if not os.path.exists(user_dir):
-        return ""
+        return []
 
     # Get all message files and their creation times
     files = []
@@ -99,14 +100,18 @@ def get_chat_history(user_id: str) -> str:
     # Sort files by creation time (oldest first)
     files.sort(key=lambda x: x[1])
 
-    # Build chat history string
+    # Build chat history list
     history = []
     for filepath, _ in files:
         with open(filepath, 'r', encoding='utf-8') as f:
             content = f.read()
-            history.append(content)
+            # Assuming alternating messages between human and assistant
+            if len(history) % 2 == 0:
+                history.append(("human", content))
+            else:
+                history.append(("ai", content))
 
-    return "\n".join(history)
+    return history
 
 @app.post("/message")
 async def call_message(request: Request, authorization: str = Header(None)):
@@ -129,18 +134,25 @@ async def call_message(request: Request, authorization: str = Header(None)):
     # Store message in chat history
     manage_chat_history(user_id, str(message['message_id']), text)
 
-    # Get chat history and create prompt
+    # Get chat history and create prompt template
     chat_history = get_chat_history(user_id)
-    prompt = f"""Previous conversation:
-{chat_history}
+    
+    # Create prompt template with history placeholder
+    history_placeholder = MessagesPlaceholder("history")
+    prompt_template = ChatPromptTemplate.from_messages([
+        ("system", "You are a helpful AI assistant."),
+        history_placeholder,
+        ("human", "{question}")
+    ])
 
-Current message:
-{text}
+    # Generate prompt with chat history
+    prompt_value = prompt_template.invoke({
+        "history": chat_history,
+        "question": text
+    })
 
-Please provide a response to the current message, taking into account the conversation history if relevant."""
-
-    # Direct LLM call with history context
-    response = llm.invoke(prompt).content
+    # Get response from LLM
+    response = llm.invoke(prompt_value).content
 
     # Send response via Telegram
     try:

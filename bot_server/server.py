@@ -195,13 +195,19 @@ def send_voice_message(chat_id, voice_file_path, reply_to_message_id=None):
         audio.export(ogg_path, format="ogg")
         
         # Send the OGG file
-        with open(ogg_path, 'rb') as voice_file:
-            logger.info(f"Sending voice message: {ogg_path}")
-            bot.send_voice(
+        # with open(ogg_path, 'rb') as voice_file:
+        #     logger.info(f"Sending voice message: {ogg_path}")
+        #     bot.send_voice(
+        #         chat_id,
+        #         voice_file,
+        #         reply_to_message_id=reply_to_message_id
+        #     )
+        bot.send_voice(
                 chat_id,
-                voice_file,
+                ogg_path,
                 reply_to_message_id=reply_to_message_id
             )
+        
             
         # Clean up OGG file
         os.remove(ogg_path)

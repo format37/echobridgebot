@@ -246,9 +246,41 @@ async def call_message(request: Request, authorization: str = Header(None)):
                 stt_response = transcribe_multiple_languages(wav_path, languages)
                 for result in stt_response.results:
                     detected_language = result.language_code
+                    transcript = result.alternatives[0].transcript
                     logger.info(f"Detected Language: {detected_language}")
-                    logger.info(f"Transcript: {result.alternatives[0].transcript}")
-                    response = f"Detected language: {detected_language}\n\n{result.alternatives[0].transcript}"
+                    logger.info(f"Transcript: {transcript}")
+                    
+                    # Get chat history and create prompt template
+                    chat_history = get_chat_history(user_id)
+                    
+                    # Create prompt template with history placeholder
+                    history_placeholder = MessagesPlaceholder("history")
+                    prompt_template = ChatPromptTemplate.from_messages([
+                        ("system", "Your name is Janet. You are a helpful AI assistant."),
+                        history_placeholder,
+                        ("human", "{question}")
+                    ])
+
+                    # Generate prompt with chat history
+                    prompt_value = prompt_template.invoke({
+                        "history": chat_history,
+                        "question": transcript
+                    })
+
+                    # Get response from LLM
+                    llm_response = llm.invoke(prompt_value).content
+
+                    # Store both transcribed message and LLM response
+                    manage_chat_history(
+                        user_id,
+                        str(message['message_id']),
+                        {
+                            "user": transcript,
+                            "assistant": llm_response
+                        }
+                    )
+
+                    response = f"Detected language: {detected_language}\n\nYou said: {transcript}\n\nResponse: {llm_response}"
                 
                 # Clean up temporary files
                 os.remove(wav_path)
@@ -289,6 +321,9 @@ async def call_message(request: Request, authorization: str = Header(None)):
         try:
             with open('greeting.txt', 'r') as f:
                 greeting = f.read()
+            with open("BCP-47.txt", "r") as f:
+                languages = [line.strip() for line in f if line.strip()]
+            greeting += f'\nSupported languages: {languages}'
             bot.send_message(
                 chat_id,
                 greeting,

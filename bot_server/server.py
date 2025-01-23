@@ -8,6 +8,7 @@ from telebot.formatting import escape_markdown
 from datetime import datetime
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from typing import Union
 
 # Initialize FastAPI
 app = FastAPI()
@@ -51,7 +52,7 @@ def user_access(message):
         users = f.read().splitlines()
     return str(message['from']['id']) in users
 
-def manage_chat_history(user_id: str, message_id: str, text: str | dict, role: str = "user"):
+def manage_chat_history(user_id: str, message_id: str, text: Union[str, dict], role: str = "user"):
     """Manages chat history for a user, storing messages and pruning old ones."""
     # Create user directory if it doesn't exist
     user_dir = f'data/users/{user_id}'

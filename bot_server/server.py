@@ -196,6 +196,7 @@ def send_voice_message(chat_id, voice_file_path, reply_to_message_id=None):
         
         # Send the OGG file
         with open(ogg_path, 'rb') as voice_file:
+            logger.info(f"Sending voice message: {ogg_path}")
             bot.send_voice(
                 chat_id,
                 voice_file,

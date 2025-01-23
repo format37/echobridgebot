@@ -13,7 +13,7 @@ import requests
 from stt_tools import transcribe_multiple_languages
 import uuid
 from pydub import AudioSegment
-from tts_tools import upload_reference_file
+from tts_tools import upload_reference_file, generate_speech
 
 # Initialize FastAPI
 app = FastAPI()
@@ -186,6 +186,93 @@ def convert_audio_to_wav(input_path: str) -> str:
     
     return output_path, output_dir
 
+def send_voice_message(chat_id, voice_file_path, reply_to_message_id=None):
+    """Helper function to send voice messages via Telegram"""
+    try:
+        with open(voice_file_path, 'rb') as voice_file:
+            bot.send_voice(
+                chat_id,
+                voice_file,
+                reply_to_message_id=reply_to_message_id
+            )
+    except Exception as e:
+        logger.error(f"Error sending voice message: {e}")
+        raise
+
+def process_llm_response(user_id: str, message_id: str, user_message: str, chat_id: int, reply_to_message_id: int, language: str = 'en') -> None:
+    """Common function to handle LLM processing and response generation"""
+    try:
+        # Get chat history and create prompt template
+        chat_history = get_chat_history(user_id)
+        
+        # Create prompt template with history placeholder
+        history_placeholder = MessagesPlaceholder("history")
+        prompt_template = ChatPromptTemplate.from_messages([
+            ("system", f"Your name is Janet. You are a helpful AI assistant. Please respond in {language} language."),
+            history_placeholder,
+            ("human", "{question}")
+        ])
+
+        # Generate prompt with chat history
+        prompt_value = prompt_template.invoke({
+            "history": chat_history,
+            "question": user_message
+        })
+
+        # Get response from LLM
+        llm_response = llm.invoke(prompt_value).content
+
+        # Store both user message and LLM response
+        manage_chat_history(
+            user_id,
+            str(message_id),
+            {
+                "user": user_message,
+                "assistant": llm_response
+            }
+        )
+
+        # Generate and send voice response
+        try:
+            # Get TTS server URL from config
+            tts_api_url = config.get('TTS_API_URL', 'http://localhost:5000')
+            
+            # Generate speech using the user's reference file
+            speech_file_name = generate_speech(
+                text=llm_response,
+                language='auto',
+                reference_file=f"{user_id}.wav",
+                api_url=tts_api_url
+            )
+            
+            # Send voice message
+            send_voice_message(
+                chat_id,
+                speech_file_name,
+                reply_to_message_id=reply_to_message_id
+            )
+            
+            # Clean up
+            os.remove(speech_file_name)
+            
+        except Exception as e:
+            logger.error(f"Error generating or sending voice message: {e}")
+            # Fall back to text message if voice generation fails
+            bot.send_message(
+                chat_id,
+                llm_response,
+                reply_to_message_id=reply_to_message_id,
+                parse_mode='Markdown'
+            )
+            
+    except Exception as e:
+        logger.error(f"Error in LLM processing: {e}")
+        bot.send_message(
+            chat_id,
+            "Sorry, there was an error processing your message.",
+            reply_to_message_id=reply_to_message_id
+        )
+
 @app.post("/message")
 async def call_message(request: Request, authorization: str = Header(None)):
     message = await request.json()
@@ -306,7 +393,15 @@ async def call_message(request: Request, authorization: str = Header(None)):
                         }
                     )
 
-                    response = llm_response
+                    # Process LLM response
+                    process_llm_response(
+                        user_id,
+                        message['message_id'],
+                        transcript,
+                        chat_id,
+                        message['message_id'],
+                        detected_language
+                    )
                 
                 # Clean up temporary files
                 os.remove(wav_path)
@@ -365,50 +460,15 @@ async def call_message(request: Request, authorization: str = Header(None)):
             )
             return JSONResponse(content={"type": "empty", "body": ''})
 
-    # Store the user's message for later
-    user_message = text
-
-    # Get chat history and create prompt template
-    chat_history = get_chat_history(user_id)
-    
-    # Create prompt template with history placeholder
-    history_placeholder = MessagesPlaceholder("history")
-    prompt_template = ChatPromptTemplate.from_messages([
-        ("system", "Your name is Janet. You are a helpful AI assistant."),
-        history_placeholder,
-        ("human", "{question}")
-    ])
-
-    # Generate prompt with chat history
-    prompt_value = prompt_template.invoke({
-        "history": chat_history,
-        "question": text
-    })
-
-    # Get response from LLM
-    response = llm.invoke(prompt_value).content
-
-    # Store both user message and LLM response in a single file
-    manage_chat_history(
-        user_id, 
-        str(message['message_id']), 
-        {
-            "user": user_message,
-            "assistant": response
-        }
+    # Process LLM response
+    process_llm_response(
+        user_id,
+        message['message_id'],
+        text,
+        chat_id,
+        message['message_id'],
+        'en'
     )
-
-    # Send response via Telegram
-    try:
-        bot.send_message(
-            chat_id,
-            response,
-            reply_to_message_id=message['message_id'],
-            parse_mode='Markdown'
-        )
-    except Exception as e:
-        logger.error(f'Error sending message: {e}')
-        bot.send_message(chat_id, response)
 
     return JSONResponse(content={"type": "empty", "body": ''})
 

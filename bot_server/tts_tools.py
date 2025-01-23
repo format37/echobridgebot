@@ -1,5 +1,7 @@
 import requests
 import os
+import time
+import uuid
 
 def generate_speech(text, language, reference_file='asmr_0.wav', api_url="http://localhost:5000"):    
     # Request payload
@@ -15,16 +17,25 @@ def generate_speech(text, language, reference_file='asmr_0.wav', api_url="http:/
         
         # Check if request was successful
         if response.status_code == 200:
+            # Create data directory if it doesn't exist
+            os.makedirs('data', exist_ok=True)
+            
+            # Generate unique filename using UUID
+            unique_id = str(uuid.uuid4())
+            output_filename = f'data/speech_{unique_id}.wav'
+            
             # Save the audio file
-            output_filename = 'output.wav'
             with open(output_filename, 'wb') as f:
                 f.write(response.content)
             print(f"Audio saved as {output_filename}")
+            return output_filename
         else:
             print(f"Error: {response.json().get('error', 'Unknown error')}")
+            return None
             
     except requests.exceptions.RequestException as e:
         print(f"Connection error: {str(e)}")
+        return None
 
 def upload_reference_file(file_path, api_url="http://localhost:5000", filename="reference.wav"):
     """

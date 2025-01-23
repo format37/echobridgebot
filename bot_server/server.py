@@ -113,6 +113,14 @@ def get_chat_history(user_id: str) -> list:
 
     return history
 
+def clear_chat_history(user_id: str) -> None:
+    """Clears all chat history for a given user."""
+    user_dir = f'data/users/{user_id}'
+    if os.path.exists(user_dir):
+        for file in os.listdir(user_dir):
+            if file.endswith('.txt'):
+                os.remove(os.path.join(user_dir, file))
+
 @app.post("/message")
 async def call_message(request: Request, authorization: str = Header(None)):
     message = await request.json()
@@ -124,12 +132,27 @@ async def call_message(request: Request, authorization: str = Header(None)):
             "body": "You are not authorized to use this bot."
         })
 
+    chat_id = message['chat']['id']
+    user_id = str(message['from']['id'])
+
     if 'text' not in message:
+        bot.send_message(
+            chat_id,
+            "Sorry, this message type is not supported yet.",
+            reply_to_message_id=message['message_id']
+        )
         return JSONResponse(content={"type": "empty", "body": ''})
 
-    chat_id = message['chat']['id']
     text = message['text']
-    user_id = str(message['from']['id'])
+
+    if text == '/reset':
+        clear_chat_history(user_id)
+        bot.send_message(
+            chat_id,
+            "Chat history has been reset.",
+            reply_to_message_id=message['message_id']
+        )
+        return JSONResponse(content={"type": "empty", "body": ''})
 
     # Store message in chat history
     manage_chat_history(user_id, str(message['message_id']), text)

@@ -198,6 +198,15 @@ async def call_message(request: Request, authorization: str = Header(None)):
             # Log file info and path
             logger.info(f"File info: {file_info}")
             logger.info(f"File path: {file_path}")
+            # Check if file exists at file_path
+            if not os.path.exists(file_path):
+                logger.error(f"File not found at path: {file_path}")
+                bot.send_message(
+                    chat_id,
+                    "Sorry, there was an error accessing the voice message file.",
+                    reply_to_message_id=message['message_id']
+                )
+                return JSONResponse(content={"type": "empty", "body": ''})
             
             # Download and save the audio file
             downloaded_file = bot.download_file(file_path)

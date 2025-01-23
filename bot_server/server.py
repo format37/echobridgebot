@@ -213,6 +213,25 @@ async def call_message(request: Request, authorization: str = Header(None)):
             reply_to_message_id=message['message_id']
         )
         return JSONResponse(content={"type": "empty", "body": ''})
+    
+    if text == '/start':
+        try:
+            with open('greeting.txt', 'r') as f:
+                greeting = f.read()
+            bot.send_message(
+                chat_id,
+                greeting,
+                reply_to_message_id=message['message_id']
+            )
+            return JSONResponse(content={"type": "empty", "body": ''})
+        except FileNotFoundError:
+            logger.error("greeting.txt not found")
+            bot.send_message(
+                chat_id,
+                "Welcome! I'm Janet, your AI assistant.",
+                reply_to_message_id=message['message_id']
+            )
+            return JSONResponse(content={"type": "empty", "body": ''})
 
     # Store the user's message for later
     user_message = text

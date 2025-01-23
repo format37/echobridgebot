@@ -63,14 +63,12 @@ def manage_chat_history(user_id: str, message_id: str, text: Union[str, dict], r
     filename = f'{date}_{message_id}.json'
     
     if isinstance(text, dict):
-        message_data = {
-            "role": role,
-            "content": text
-        }
+        # Store directly in new format
+        message_data = text
     else:
+        # Legacy single message format
         message_data = {
-            "role": role,
-            "content": text
+            role: text
         }
     
     with open(os.path.join(user_dir, filename), 'w', encoding='utf-8') as f:
@@ -118,14 +116,21 @@ def get_chat_history(user_id: str) -> list:
     for filepath, _ in files:
         with open(filepath, 'r', encoding='utf-8') as f:
             message_data = json.load(f)
-            if isinstance(message_data['content'], dict):
-                # Handle conversation format
+            if 'user' in message_data and 'assistant' in message_data:
+                # Handle new format
                 history.extend([
-                    ("user", message_data['content']['user_message']),
-                    ("assistant", message_data['content']['assistant_response'])
+                    ("user", message_data['user']),
+                    ("assistant", message_data['assistant'])
+                ])
+            elif isinstance(message_data.get('content'), dict):
+                # Handle old conversation format
+                content = message_data['content']
+                history.extend([
+                    ("user", content['user_message']),
+                    ("assistant", content['assistant_response'])
                 ])
             else:
-                # Handle legacy format
+                # Handle legacy single message format
                 history.append((message_data['role'], message_data['content']))
 
     return history
@@ -199,10 +204,9 @@ async def call_message(request: Request, authorization: str = Header(None)):
         user_id, 
         str(message['message_id']), 
         {
-            "user_message": user_message,
-            "assistant_response": response
-        },
-        role="conversation"
+            "user": user_message,
+            "assistant": response
+        }
     )
 
     # Send response via Telegram

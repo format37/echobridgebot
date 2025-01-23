@@ -1,6 +1,7 @@
 # Set the container name
 CONTAINER_NAME="echobridgebot"
 IMAGE_NAME="echobridgebot_image"
+TELEGRAM_BOT_TOKEN="your_bot_token"
 
 # Check if config.json exists
 if [ ! -f "$(pwd)/config.json" ]; then
@@ -18,7 +19,7 @@ sudo docker run -d \
     -v "$(pwd)/config.json:/server/config.json" \
     -v /etc/localtime:/etc/localtime:ro \
     -v /etc/timezone:/etc/timezone:ro \
-    -v /TELEGRAM_BOT_TOKEN:/TELEGRAM_BOT_TOKEN \
+    -v /$TELEGRAM_BOT_TOKEN:/$TELEGRAM_BOT_TOKEN \
     $IMAGE_NAME
 
 # Check if container started successfully

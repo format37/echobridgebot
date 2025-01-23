@@ -209,12 +209,12 @@ async def call_message(request: Request, authorization: str = Header(None)):
                 return JSONResponse(content={"type": "empty", "body": ''})
             
             # Download and save the audio file
-            downloaded_file = bot.download_file(file_path)
-            audio_path = os.path.join(temp_dir, f'{user_id}.ogg')
-            with open(audio_path, 'wb') as audio_file:
-                audio_file.write(downloaded_file)
+            # downloaded_file = bot.download_file(file_path)
+            # audio_path = os.path.join(temp_dir, f'{user_id}.ogg')
+            # with open(audio_path, 'wb') as audio_file:
+            #     audio_file.write(downloaded_file)
             
-            response = f"Voice message received and saved successfully"
+            response = f"Voice message received and accepted successfully"
             
         bot.send_message(
             chat_id,

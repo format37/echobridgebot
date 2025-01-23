@@ -168,6 +168,33 @@ async def call_message(request: Request, authorization: str = Header(None)):
     chat_id = message['chat']['id']
     user_id = str(message['from']['id'])
 
+    # Handle audio document
+    if 'document' in message and 'mime_type' in message['document'] and 'audio' in message['document']['mime_type']:
+        bot.send_message(
+            chat_id,
+            "Audio file received",
+            reply_to_message_id=message['message_id']
+        )
+        return JSONResponse(content={"type": "empty", "body": ''})
+
+    # Handle voice message
+    if 'voice' in message and 'audio' in message['voice']['mime_type']:
+        response = "Voice message received"
+        duration = message['voice']['duration']
+        
+        if duration < 1:
+            response += ". But duration is too short"
+        elif duration > 60:
+            response += ". But duration is too long"
+            
+        bot.send_message(
+            chat_id,
+            response,
+            reply_to_message_id=message['message_id']
+        )
+        return JSONResponse(content={"type": "empty", "body": ''})
+
+    # Original text message handling
     if 'text' not in message:
         bot.send_message(
             chat_id,

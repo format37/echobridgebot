@@ -202,6 +202,9 @@ def send_voice_message(chat_id, voice_file_path, reply_to_message_id=None):
 def process_llm_response(user_id: str, message_id: str, user_message: str, chat_id: int, reply_to_message_id: int, language: str = 'en') -> None:
     """Common function to handle LLM processing and response generation"""
     try:
+        # Language format simplification "en-US" -> "en"
+        language = language.split('-')[0]
+                
         # Get chat history and create prompt template
         chat_history = get_chat_history(user_id)
         
@@ -240,7 +243,7 @@ def process_llm_response(user_id: str, message_id: str, user_message: str, chat_
             # Generate speech using the user's reference file
             speech_file_name = generate_speech(
                 text=llm_response,
-                language='auto',
+                language=language,
                 reference_file=f"{user_id}.wav",
                 api_url=tts_api_url
             )

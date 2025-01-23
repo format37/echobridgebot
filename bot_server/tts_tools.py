@@ -3,7 +3,7 @@ import os
 import time
 import uuid
 
-def generate_speech(text, language, reference_file='asmr_0.wav', api_url="http://localhost:5000"):    
+def generate_speech(text, language, reference_file='asmr_0.wav', api_url="http://localhost:5000"):
     # Request payload
     payload = {
         'text': text,

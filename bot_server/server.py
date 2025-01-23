@@ -196,7 +196,7 @@ async def call_message(request: Request, authorization: str = Header(None)):
     # Create prompt template with history placeholder
     history_placeholder = MessagesPlaceholder("history")
     prompt_template = ChatPromptTemplate.from_messages([
-        ("system", "You are a helpful AI assistant."),
+        ("system", "Your name is Janet. You are a helpful AI assistant."),
         history_placeholder,
         ("human", "{question}")
     ])

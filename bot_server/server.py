@@ -10,6 +10,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from typing import Union
 import requests
+from stt import transcribe_multiple_languages
 
 # Initialize FastAPI
 app = FastAPI()
@@ -184,14 +185,10 @@ async def call_message(request: Request, authorization: str = Header(None)):
         duration = message['voice']['duration']
         
         if duration < 1:
-            response = "Voice message received, but duration is too short"
+            response = "Voice message received, but duration is too short < 1 sec."
         elif duration > 60:
-            response = "Voice message received, but duration is too long"
+            response = "Voice message received, but duration is too long: > 60 sec."
         else:
-            # Create temp directory if it doesn't exist
-            temp_dir = 'data/temp'
-            os.makedirs(temp_dir, exist_ok=True)
-            
             # Get the file path using the Telegram API
             file_info = bot.get_file(voice_file_id)
             file_path = file_info.file_path
@@ -208,13 +205,18 @@ async def call_message(request: Request, authorization: str = Header(None)):
                 )
                 return JSONResponse(content={"type": "empty", "body": ''})
             
-            # Download and save the audio file
-            # downloaded_file = bot.download_file(file_path)
-            # audio_path = os.path.join(temp_dir, f'{user_id}.ogg')
-            # with open(audio_path, 'wb') as audio_file:
-            #     audio_file.write(downloaded_file)
+            with open("BCP-47.txt", "r") as f:  # https://cloud.google.com/speech-to-text/docs/speech-to-text-supported-languages
+                languages = [line.strip() for line in f if line.strip()]
             
-            response = f"Voice message received and accepted successfully"
+            stt_response = transcribe_multiple_languages(file_path, languages)
+            for result in stt_response.results:
+                detected_language = result.language_code  # Get detected language code
+                logger.info(f"Detected Language: {detected_language}")
+                logger.info(f"Transcript: {result.alternatives[0].transcript}")
+                response = f"Detected language: {detected_language}\n\n{result.alternatives[0].transcript}"
+
+            
+            
             
         bot.send_message(
             chat_id,

@@ -82,8 +82,19 @@ def manage_chat_history(user_id: str, message_id: str, text: Union[str, dict], r
             filepath = os.path.join(user_dir, f)
             with open(filepath, 'r', encoding='utf-8') as file:
                 content = json.load(file)
-                total_length += len(content['content'])
-                files.append((filepath, os.path.getctime(filepath), content))
+                # Calculate length based on the format of the message
+                if 'user' in content and 'assistant' in content:
+                    # New format
+                    total_length += len(content['user']) + len(content['assistant'])
+                elif 'content' in content:
+                    # Old format
+                    if isinstance(content['content'], dict):
+                        total_length += len(content['content']['user_message']) + len(content['content']['assistant_response'])
+                    else:
+                        total_length += len(content['content'])
+                else:
+                    # Single message format
+                    total_length += sum(len(v) for v in content.values())
 
     # Sort files by creation time (oldest first)
     files.sort(key=lambda x: x[1])

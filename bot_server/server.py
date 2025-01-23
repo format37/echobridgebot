@@ -160,8 +160,8 @@ def clear_chat_history(user_id: str) -> None:
 
 def convert_audio_to_wav(input_path: str) -> str:
     """
-    Convert audio file to WAV format with 16kHz sample rate and mono channel.
-    Returns path to converted file.
+    Convert audio file to WAV format with 16kHz sample rate, mono channel, and 16-bit depth.
+    Returns path to converted file and temp directory.
     """
     # Create unique output directory
     output_dir = f'data/{str(uuid.uuid4())}'
@@ -170,10 +170,18 @@ def convert_audio_to_wav(input_path: str) -> str:
     # Generate output path
     output_path = os.path.join(output_dir, 'audio.wav')
     
-    # Convert audio
+    # Convert audio with explicit parameters
     audio = AudioSegment.from_file(input_path)
-    audio = audio.set_frame_rate(16000).set_channels(1)
-    audio.export(output_path, format="wav")
+    audio = audio.set_frame_rate(16000)  # Set sample rate to 16kHz
+    audio = audio.set_channels(1)        # Convert to mono
+    audio = audio.set_sample_width(2)    # Set to 16-bit (2 bytes)
+    
+    # Export with explicit parameters
+    audio.export(
+        output_path,
+        format="wav",
+        parameters=["-acodec", "pcm_s16le"]  # Force 16-bit PCM encoding
+    )
     
     return output_path, output_dir
 
@@ -229,6 +237,8 @@ async def call_message(request: Request, authorization: str = Header(None)):
             # Convert audio to WAV format
             try:
                 wav_path, temp_dir = convert_audio_to_wav(file_path)
+                logger.info(f"WAV path: {wav_path}")
+                logger.info(f"Temp dir: {temp_dir}")
                 
                 with open("BCP-47.txt", "r") as f:
                     languages = [line.strip() for line in f if line.strip()]

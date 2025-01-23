@@ -280,7 +280,7 @@ async def call_message(request: Request, authorization: str = Header(None)):
                         }
                     )
 
-                    response = f"Detected language: {detected_language}\n\nYou said: {transcript}\n\nResponse: {llm_response}"
+                    response = llm_response"
                 
                 # Clean up temporary files
                 os.remove(wav_path)

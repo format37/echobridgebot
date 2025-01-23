@@ -51,7 +51,7 @@ def user_access(message):
         users = f.read().splitlines()
     return str(message['from']['id']) in users
 
-def manage_chat_history(user_id: str, message_id: str, text: str):
+def manage_chat_history(user_id: str, message_id: str, text: str, role: str = "user"):
     """Manages chat history for a user, storing messages and pruning old ones."""
     # Create user directory if it doesn't exist
     user_dir = f'data/users/{user_id}'
@@ -59,19 +59,24 @@ def manage_chat_history(user_id: str, message_id: str, text: str):
 
     # Save current message
     date = datetime.now().strftime('%Y%m%d_%H%M%S')
-    filename = f'{date}_{message_id}.txt'
+    filename = f'{date}_{message_id}.json'
+    message_data = {
+        "role": role,
+        "content": text
+    }
+    
     with open(os.path.join(user_dir, filename), 'w', encoding='utf-8') as f:
-        f.write(text)
+        json.dump(message_data, f, ensure_ascii=False)
 
     # Get all message files and their creation times
     files = []
     total_length = 0
     for f in os.listdir(user_dir):
-        if f.endswith('.txt'):
+        if f.endswith('.json'):
             filepath = os.path.join(user_dir, f)
             with open(filepath, 'r', encoding='utf-8') as file:
-                content = file.read()
-                total_length += len(content)
+                content = json.load(file)
+                total_length += len(content['content'])
                 files.append((filepath, os.path.getctime(filepath), content))
 
     # Sort files by creation time (oldest first)
@@ -80,7 +85,7 @@ def manage_chat_history(user_id: str, message_id: str, text: str):
     # Remove oldest files until total length is below threshold
     while total_length > HISTORY_THRESHOLD and files:
         filepath, _, content = files[0]
-        total_length -= len(content)
+        total_length -= len(content['content'])
         os.remove(filepath)
         files.pop(0)
 
@@ -93,7 +98,7 @@ def get_chat_history(user_id: str) -> list:
     # Get all message files and their creation times
     files = []
     for f in os.listdir(user_dir):
-        if f.endswith('.txt'):
+        if f.endswith('.json'):
             filepath = os.path.join(user_dir, f)
             files.append((filepath, os.path.getctime(filepath)))
 
@@ -104,12 +109,8 @@ def get_chat_history(user_id: str) -> list:
     history = []
     for filepath, _ in files:
         with open(filepath, 'r', encoding='utf-8') as f:
-            content = f.read()
-            # Assuming alternating messages between human and assistant
-            if len(history) % 2 == 0:
-                history.append(("human", content))
-            else:
-                history.append(("ai", content))
+            message_data = json.load(f)
+            history.append((message_data['role'], message_data['content']))
 
     return history
 
@@ -118,7 +119,7 @@ def clear_chat_history(user_id: str) -> None:
     user_dir = f'data/users/{user_id}'
     if os.path.exists(user_dir):
         for file in os.listdir(user_dir):
-            if file.endswith('.txt'):
+            if file.endswith('.json'):
                 os.remove(os.path.join(user_dir, file))
 
 @app.post("/message")
@@ -154,8 +155,8 @@ async def call_message(request: Request, authorization: str = Header(None)):
         )
         return JSONResponse(content={"type": "empty", "body": ''})
 
-    # Store message in chat history
-    manage_chat_history(user_id, str(message['message_id']), text)
+    # Store user message in chat history
+    manage_chat_history(user_id, str(message['message_id']), text, role="user")
 
     # Get chat history and create prompt template
     chat_history = get_chat_history(user_id)
@@ -176,6 +177,9 @@ async def call_message(request: Request, authorization: str = Header(None)):
 
     # Get response from LLM
     response = llm.invoke(prompt_value).content
+
+    # Store LLM response in chat history
+    manage_chat_history(user_id, f"{message['message_id']}_response", response, role="system")
 
     # Send response via Telegram
     try:

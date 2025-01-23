@@ -16,6 +16,9 @@ sudo docker run -d \
     --restart unless-stopped \
     -v "$(pwd)/data:/server/data" \
     -v "$(pwd)/config.json:/server/config.json" \
+    -v /etc/localtime:/etc/localtime:ro \
+    -v /etc/timezone:/etc/timezone:ro \
+    -v /TELEGRAM_BOT_TOKEN:/TELEGRAM_BOT_TOKEN \
     $IMAGE_NAME
 
 # Check if container started successfully

@@ -1,5 +1,12 @@
 FROM python:3.9.16
 WORKDIR /server
+
+# Install FFmpeg
+RUN apt-get update && \
+    apt-get install -y ffmpeg && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt /server
 RUN pip3 install -r requirements.txt --no-cache-dir
 COPY api.json /server

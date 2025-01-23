@@ -11,6 +11,8 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from typing import Union
 import requests
 from stt import transcribe_multiple_languages
+import uuid
+from pydub import AudioSegment
 
 # Initialize FastAPI
 app = FastAPI()
@@ -156,6 +158,25 @@ def clear_chat_history(user_id: str) -> None:
             if file.endswith('.json'):
                 os.remove(os.path.join(user_dir, file))
 
+def convert_audio_to_wav(input_path: str) -> str:
+    """
+    Convert audio file to WAV format with 16kHz sample rate and mono channel.
+    Returns path to converted file.
+    """
+    # Create unique output directory
+    output_dir = f'data/{str(uuid.uuid4())}'
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Generate output path
+    output_path = os.path.join(output_dir, 'audio.wav')
+    
+    # Convert audio
+    audio = AudioSegment.from_file(input_path)
+    audio = audio.set_frame_rate(16000).set_channels(1)
+    audio.export(output_path, format="wav")
+    
+    return output_path, output_dir
+
 @app.post("/message")
 async def call_message(request: Request, authorization: str = Header(None)):
     message = await request.json()
@@ -205,19 +226,28 @@ async def call_message(request: Request, authorization: str = Header(None)):
                 )
                 return JSONResponse(content={"type": "empty", "body": ''})
             
-            with open("BCP-47.txt", "r") as f:  # https://cloud.google.com/speech-to-text/docs/speech-to-text-supported-languages
-                languages = [line.strip() for line in f if line.strip()]
-            
-            stt_response = transcribe_multiple_languages(file_path, languages)
-            for result in stt_response.results:
-                detected_language = result.language_code  # Get detected language code
-                logger.info(f"Detected Language: {detected_language}")
-                logger.info(f"Transcript: {result.alternatives[0].transcript}")
-                response = f"Detected language: {detected_language}\n\n{result.alternatives[0].transcript}"
+            # Convert audio to WAV format
+            try:
+                wav_path, temp_dir = convert_audio_to_wav(file_path)
+                
+                with open("BCP-47.txt", "r") as f:
+                    languages = [line.strip() for line in f if line.strip()]
+                
+                stt_response = transcribe_multiple_languages(wav_path, languages)
+                for result in stt_response.results:
+                    detected_language = result.language_code
+                    logger.info(f"Detected Language: {detected_language}")
+                    logger.info(f"Transcript: {result.alternatives[0].transcript}")
+                    response = f"Detected language: {detected_language}\n\n{result.alternatives[0].transcript}"
+                
+                # Clean up temporary files
+                os.remove(wav_path)
+                os.rmdir(temp_dir)
+                
+            except Exception as e:
+                logger.error(f"Error processing audio: {e}")
+                response = "Sorry, there was an error processing the voice message."
 
-            
-            
-            
         bot.send_message(
             chat_id,
             response,

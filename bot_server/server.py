@@ -195,6 +195,9 @@ async def call_message(request: Request, authorization: str = Header(None)):
             # Get the file path using the Telegram API
             file_info = bot.get_file(voice_file_id)
             file_path = file_info.file_path
+            # Log file info and path
+            logger.info(f"File info: {file_info}")
+            logger.info(f"File path: {file_path}")
             
             # Download and save the audio file
             downloaded_file = bot.download_file(file_path)

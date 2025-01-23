@@ -10,9 +10,10 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from typing import Union
 import requests
-from stt import transcribe_multiple_languages
+from stt_tools import transcribe_multiple_languages
 import uuid
 from pydub import AudioSegment
+from tts_tools import upload_reference_file
 
 # Initialize FastAPI
 app = FastAPI()
@@ -201,11 +202,36 @@ async def call_message(request: Request, authorization: str = Header(None)):
 
     # Handle audio document
     if 'document' in message and 'mime_type' in message['document'] and 'audio' in message['document']['mime_type']:
-        bot.send_message(
-            chat_id,
-            "Audio file received",
-            reply_to_message_id=message['message_id']
-        )
+        try:
+            # Get the file from Telegram
+            file_id = message['document']['file_id']
+            file_info = bot.get_file(file_id)
+            file_path = file_info.file_path
+
+            # Convert to WAV if needed
+            wav_path, temp_dir = convert_audio_to_wav(file_path)
+            
+            # Upload to TTS server
+            tts_api_address = config.get('TTS_API_URL', 'http://localhost:5000')
+            filename = f"{user_id}.wav" # One reference for each user
+            response = upload_reference_file(wav_path, api_url=tts_api_address, filename=filename)
+            
+            # Clean up temporary files
+            os.remove(wav_path)
+            os.rmdir(temp_dir)
+            
+            bot.send_message(
+                chat_id,
+                "Reference audio file successfully uploaded!",
+                reply_to_message_id=message['message_id']
+            )
+        except Exception as e:
+            logger.error(f"Error processing audio document: {e}")
+            bot.send_message(
+                chat_id,
+                "Sorry, there was an error processing the audio file.",
+                reply_to_message_id=message['message_id']
+            )
         return JSONResponse(content={"type": "empty", "body": ''})
 
     # Handle voice message

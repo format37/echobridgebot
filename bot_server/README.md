@@ -6,7 +6,8 @@
     "OPENAI_API_KEY": "",
     "LANGSMITH_API_KEY": "",
     "LANGSMITH_PROJECT": "echobridgebot",
-    "HISTORY_THRESHOLD": 4000
+    "HISTORY_THRESHOLD": 4000,
+    "TTS_API_URL": "http://localhost:5000"
 }
 ```
 Where TOKEN is a telegram bot token
@@ -34,3 +35,9 @@ chmod +x logs.sh
 sh build_and_run.sh
 ```
 4. Check that bot is able to answer
+# NGROK installation to provide the IP channel voice cloning feature
+1. Installation
+```
+sudo snap install ngrok
+```
+2. login to ngrok.com

@@ -303,11 +303,12 @@ async def send_reply(bot_token, chat_id, message_id, text):
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     payload = {
         'chat_id': chat_id,
-        'text': f"*{text}*",
+        'text': text,
         'reply_to_message_id': message_id,
         'parse_mode': 'MarkdownV2'
     }
     response = requests.post(url, data=payload)
+    logger.info(f"Update message response: {response.json()}")
     return response.json()
 
 @app.post("/message")

@@ -487,7 +487,7 @@ async def call_message(request: Request, authorization: str = Header(None)):
                     )
                     logger.info(f"Voice response sent to user {user_id}")
                     bot.edit_message_text(
-                        f"`[█████] [{detected_language}] Done in {time.time() - start_time} sec.`".replace('.', '\\.'),
+                        f"`[█████] [{detected_language}] Done in {round(time.time() - start_time, 1)} sec.`".replace('.', '\\.'),
                         chat_id=chat_id,
                         message_id=update_id,
                         parse_mode='MarkdownV2'

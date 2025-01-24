@@ -303,8 +303,9 @@ async def send_reply(bot_token, chat_id, message_id, text):
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     payload = {
         'chat_id': chat_id,
-        'text': text,
-        'reply_to_message_id': message_id
+        'text': f"```{text}```",
+        'reply_to_message_id': message_id,
+        'parse_mode': 'MarkdownV2'
     }
     response = requests.post(url, data=payload)
     return response.json()
@@ -395,7 +396,7 @@ async def call_message(request: Request, authorization: str = Header(None)):
             try:
                 start_time = time.time()
                 bot.edit_message_text(
-                    "[#    ] Voice convertation..",
+                    "[█    ] Voice convertation..",
                     chat_id=chat_id,
                     message_id=update_id
                 )
@@ -407,7 +408,7 @@ async def call_message(request: Request, authorization: str = Header(None)):
                     languages = [line.strip() for line in f if line.strip()]
                 
                 bot.edit_message_text(
-                    "[##   ] Voice to text transcribation..",
+                    "[██   ] Voice to text transcribation..",
                     chat_id=chat_id,
                     message_id=update_id
                 )
@@ -436,7 +437,7 @@ async def call_message(request: Request, authorization: str = Header(None)):
                     })
                     
                     bot.edit_message_text(
-                        "[###  ] Thinking..",
+                        "[███  ] Thinking..",
                         chat_id=chat_id,
                         message_id=update_id
                     )
@@ -455,7 +456,7 @@ async def call_message(request: Request, authorization: str = Header(None)):
                     )
 
                     bot.edit_message_text(
-                        "[#### ] Voice synthesis..",
+                        "[████ ] Voice synthesis..",
                         chat_id=chat_id,
                         message_id=update_id
                     )
@@ -470,7 +471,7 @@ async def call_message(request: Request, authorization: str = Header(None)):
                     )
                     logger.info(f"Voice response sent to user {user_id}")
                     bot.edit_message_text(
-                        f"[#####] Done in {time.time() - start_time} sec.",
+                        f"[█████] Done in {time.time() - start_time} sec.",
                         chat_id=chat_id,
                         message_id=update_id
                     )

@@ -399,7 +399,7 @@ async def call_message(request: Request, authorization: str = Header(None)):
             try:
                 start_time = time.time()
                 bot.edit_message_text(
-                    "[█    ] Voice convertation..".replace('.', '\\.'),
+                    "`[█    ] Voice convertation..`".replace('.', '\\.'),
                     chat_id=chat_id,
                     message_id=update_id,
                     parse_mode='MarkdownV2'
@@ -412,7 +412,7 @@ async def call_message(request: Request, authorization: str = Header(None)):
                     languages = [line.strip() for line in f if line.strip()]
                 
                 bot.edit_message_text(
-                    "[██   ] Voice to text transcribation..".replace('.', '\\.'),
+                    "`[██   ] Voice to text transcribation..`".replace('.', '\\.'),
                     chat_id=chat_id,
                     message_id=update_id,
                     parse_mode='MarkdownV2'
@@ -442,7 +442,7 @@ async def call_message(request: Request, authorization: str = Header(None)):
                     })
                     
                     bot.edit_message_text(
-                        "[███  ] Thinking..".replace('.', '\\.'),
+                        "`[███  ] Thinking..`".replace('.', '\\.'),
                         chat_id=chat_id,
                         message_id=update_id,
                         parse_mode='MarkdownV2'
@@ -462,7 +462,7 @@ async def call_message(request: Request, authorization: str = Header(None)):
                     )
 
                     bot.edit_message_text(
-                        "[████ ] Voice synthesis..".replace('.', '\\.'),
+                        "`[████ ] Voice synthesis..`".replace('.', '\\.'),
                         chat_id=chat_id,
                         message_id=update_id,
                         parse_mode='MarkdownV2'
@@ -478,7 +478,7 @@ async def call_message(request: Request, authorization: str = Header(None)):
                     )
                     logger.info(f"Voice response sent to user {user_id}")
                     bot.edit_message_text(
-                        f"[█████] Done in {time.time() - start_time} sec.".replace('.', '\\.'),
+                        f"`[█████] Done in {time.time() - start_time} sec.`".replace('.', '\\.'),
                         chat_id=chat_id,
                         message_id=update_id,
                         parse_mode='MarkdownV2'

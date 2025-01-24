@@ -399,9 +399,10 @@ async def call_message(request: Request, authorization: str = Header(None)):
             try:
                 start_time = time.time()
                 bot.edit_message_text(
-                    "[█    ] Voice convertation..",
+                    "[█    ] Voice convertation..".replace('.', '\\.'),
                     chat_id=chat_id,
-                    message_id=update_id
+                    message_id=update_id,
+                    parse_mode='MarkdownV2'
                 )
                 wav_path, temp_dir = convert_audio_to_wav(file_path)
                 logger.info(f"WAV path: {wav_path}")
@@ -411,9 +412,10 @@ async def call_message(request: Request, authorization: str = Header(None)):
                     languages = [line.strip() for line in f if line.strip()]
                 
                 bot.edit_message_text(
-                    "[██   ] Voice to text transcribation..",
+                    "[██   ] Voice to text transcribation..".replace('.', '\\.'),
                     chat_id=chat_id,
-                    message_id=update_id
+                    message_id=update_id,
+                    parse_mode='MarkdownV2'
                 )
                 stt_response = transcribe_multiple_languages(wav_path, languages)
                 for result in stt_response.results:
@@ -440,9 +442,10 @@ async def call_message(request: Request, authorization: str = Header(None)):
                     })
                     
                     bot.edit_message_text(
-                        "[███  ] Thinking..",
+                        "[███  ] Thinking..".replace('.', '\\.'),
                         chat_id=chat_id,
-                        message_id=update_id
+                        message_id=update_id,
+                        parse_mode='MarkdownV2'
                     )
                     
                     # Get response from LLM
@@ -459,9 +462,10 @@ async def call_message(request: Request, authorization: str = Header(None)):
                     )
 
                     bot.edit_message_text(
-                        "[████ ] Voice synthesis..",
+                        "[████ ] Voice synthesis..".replace('.', '\\.'),
                         chat_id=chat_id,
-                        message_id=update_id
+                        message_id=update_id,
+                        parse_mode='MarkdownV2'
                     )
                     # Process LLM response
                     process_llm_response(
@@ -474,9 +478,10 @@ async def call_message(request: Request, authorization: str = Header(None)):
                     )
                     logger.info(f"Voice response sent to user {user_id}")
                     bot.edit_message_text(
-                        f"[█████] Done in {time.time() - start_time} sec.",
+                        f"[█████] Done in {time.time() - start_time} sec.".replace('.', '\\.'),
                         chat_id=chat_id,
-                        message_id=update_id
+                        message_id=update_id,
+                        parse_mode='MarkdownV2'
                     )
                 # Clean up temporary files
                 os.remove(wav_path)

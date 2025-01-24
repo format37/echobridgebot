@@ -1,5 +1,24 @@
 # How to build
+0. First steps:
+init
+```
+git clone https://github.com/format37/echobridgebot.git
+cd echobridgebot
+```
+(logout)[https://github.com/format37/telegram_bot] your bot from the official telegram server and restart the bot server.
+```
+cd ~/projects/telegram_bot/logout
+python3 logout.py
+cd ..
+sh compose.sh
+```
+
 1. Define the config.json with the following content
+```
+cd echobridgebot/bot_server
+nano config.json
+```
+Content:
 ```
 {
     "TOKEN": "",
@@ -34,6 +53,8 @@ chmod +x run.sh
 chmod +x logs.sh
 sh build_and_run.sh
 ```
+Define your bot token in the run.sh and logs.sh  
+Define your port in the Dockerfile if necessary
 4. Check that bot is able to answer
 # NGROK installation to provide the IP channel voice cloning feature
 1. Installation

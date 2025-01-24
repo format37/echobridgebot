@@ -301,9 +301,11 @@ def process_llm_response(user_id: str, message_id: str, user_message: str, chat_
 
 async def send_reply(bot_token, chat_id, message_id, text):
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    # Escape dots in text for MarkdownV2 format
+    text = text.replace('.', '\\.')
     payload = {
         'chat_id': chat_id,
-        'text': text,
+        'text': f"*{text}*",
         'reply_to_message_id': message_id,
         'parse_mode': 'MarkdownV2'
     }

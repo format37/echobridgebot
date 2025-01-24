@@ -427,20 +427,22 @@ async def call_message(request: Request, authorization: str = Header(None)):
                         message['message_id'],
                         detected_language
                     )
+                    logger.info(f"Voice response sent to user {user_id}")
                 
                 # Clean up temporary files
                 os.remove(wav_path)
                 os.rmdir(temp_dir)
+                return JSONResponse(content={"type": "empty", "body": ''})
                 
             except Exception as e:
                 logger.error(f"Error processing audio: {e}")
                 response = "Sorry, there was an error processing the voice message."
+                bot.send_message(
+                    chat_id,
+                    response,
+                    reply_to_message_id=message['message_id']
+                )
 
-        bot.send_message(
-            chat_id,
-            response,
-            reply_to_message_id=message['message_id']
-        )
         return JSONResponse(content={"type": "empty", "body": ''})
 
     # Original text message handling

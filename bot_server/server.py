@@ -298,6 +298,16 @@ def process_llm_response(user_id: str, message_id: str, user_message: str, chat_
             reply_to_message_id=reply_to_message_id
         )
 
+async def send_reply(bot_token, chat_id, message_id, text):
+    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    payload = {
+        'chat_id': chat_id,
+        'text': text,
+        'reply_to_message_id': message_id
+    }
+    response = requests.post(url, data=payload)
+    return response.json()
+
 @app.post("/message")
 async def call_message(request: Request, authorization: str = Header(None)):
     message = await request.json()
@@ -356,6 +366,13 @@ async def call_message(request: Request, authorization: str = Header(None)):
         elif duration > 60:
             response = "Voice message received, but duration is too long: > 60 sec."
         else:
+            # Send status message
+            # bot.send_message(
+            #     chat_id,
+            #     "Converting audio...",
+            #     reply_to_message_id=message['message_id']
+            # )
+            update_message = send_reply(config['TOKEN'], chat_id, message['message_id'], "Converting audio...")
             # Get the file path using the Telegram API
             file_info = bot.get_file(voice_file_id)
             file_path = file_info.file_path

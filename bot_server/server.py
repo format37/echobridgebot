@@ -303,7 +303,7 @@ async def send_reply(bot_token, chat_id, message_id, text):
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     payload = {
         'chat_id': chat_id,
-        'text': f"~{text}~",
+        'text': f"*{text}*",
         'reply_to_message_id': message_id,
         'parse_mode': 'MarkdownV2'
     }
@@ -374,7 +374,7 @@ async def call_message(request: Request, authorization: str = Header(None)):
             #     "Converting audio...",
             #     reply_to_message_id=message['message_id']
             # )
-            update_message = await send_reply(config['TOKEN'], chat_id, message['message_id'], "[  ] Reading the reference voice..")
+            update_message = await send_reply(config['TOKEN'], chat_id, message['message_id'], "[     ] Reading the reference voice..")
             update_id = update_message['result']['message_id']
             # Get the file path using the Telegram API
             file_info = bot.get_file(voice_file_id)

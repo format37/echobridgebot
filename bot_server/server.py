@@ -14,6 +14,7 @@ from stt_tools import transcribe_multiple_languages
 import uuid
 from pydub import AudioSegment
 from tts_tools import upload_reference_file, generate_speech
+import time
 
 # Initialize FastAPI
 app = FastAPI()
@@ -392,8 +393,9 @@ async def call_message(request: Request, authorization: str = Header(None)):
             
             # Convert audio to WAV format
             try:
+                start_time = time.time()
                 bot.edit_message_text(
-                    "[# ] Converting voice..",
+                    "[#    ] Voice convertation..",
                     chat_id=chat_id,
                     message_id=update_id
                 )
@@ -404,6 +406,11 @@ async def call_message(request: Request, authorization: str = Header(None)):
                 with open("BCP-47.txt", "r") as f:
                     languages = [line.strip() for line in f if line.strip()]
                 
+                bot.edit_message_text(
+                    "[##   ] Voice to text transcribation..",
+                    chat_id=chat_id,
+                    message_id=update_id
+                )
                 stt_response = transcribe_multiple_languages(wav_path, languages)
                 for result in stt_response.results:
                     detected_language = result.language_code
@@ -427,7 +434,13 @@ async def call_message(request: Request, authorization: str = Header(None)):
                         "history": chat_history,
                         "question": transcript
                     })
-
+                    
+                    bot.edit_message_text(
+                        "[###  ] Thinking..",
+                        chat_id=chat_id,
+                        message_id=update_id
+                    )
+                    
                     # Get response from LLM
                     llm_response = llm.invoke(prompt_value).content
 
@@ -441,6 +454,11 @@ async def call_message(request: Request, authorization: str = Header(None)):
                         }
                     )
 
+                    bot.edit_message_text(
+                        "[#### ] Voice synthesis..",
+                        chat_id=chat_id,
+                        message_id=update_id
+                    )
                     # Process LLM response
                     process_llm_response(
                         user_id,
@@ -451,7 +469,11 @@ async def call_message(request: Request, authorization: str = Header(None)):
                         detected_language
                     )
                     logger.info(f"Voice response sent to user {user_id}")
-                
+                    bot.edit_message_text(
+                        f"[#####] Done in {time.time() - start_time} sec.",
+                        chat_id=chat_id,
+                        message_id=update_id
+                    )
                 # Clean up temporary files
                 os.remove(wav_path)
                 os.rmdir(temp_dir)

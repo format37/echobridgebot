@@ -372,7 +372,8 @@ async def call_message(request: Request, authorization: str = Header(None)):
             #     "Converting audio...",
             #     reply_to_message_id=message['message_id']
             # )
-            update_message = await send_reply(config['TOKEN'], chat_id, message['message_id'], "Reading the reference voice...")
+            update_message = await send_reply(config['TOKEN'], chat_id, message['message_id'], "[  ] Reading the reference voice..")
+            update_id = update_message['result']['message_id']
             # Get the file path using the Telegram API
             file_info = bot.get_file(voice_file_id)
             file_path = file_info.file_path
@@ -391,6 +392,11 @@ async def call_message(request: Request, authorization: str = Header(None)):
             
             # Convert audio to WAV format
             try:
+                bot.edit_message_text(
+                    "[# ] Converting voice..",
+                    chat_id=chat_id,
+                    message_id=update_id
+                )
                 wav_path, temp_dir = convert_audio_to_wav(file_path)
                 logger.info(f"WAV path: {wav_path}")
                 logger.info(f"Temp dir: {temp_dir}")

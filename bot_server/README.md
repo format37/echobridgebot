@@ -40,4 +40,13 @@ sh build_and_run.sh
 ```
 sudo snap install ngrok
 ```
-2. login to ngrok.com
+2. login to ngrok.com and get instruction on how to install, configure and run
+3. Run:
+```
+ngrok http http://localhost:5000
+```
+4. Update the TTS_API_URL in the bot_server/config.json
+5. Restart the bot_server:
+```
+sh build_and_run.sh
+```

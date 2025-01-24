@@ -213,6 +213,12 @@ def send_voice_message(chat_id, voice_file_path, reply_to_message_id=None):
             
     except Exception as e:
         logger.error(f"Error sending voice message: {e}")
+        if 'VOICE_MESSAGES_FORBIDDEN' in str(e):
+            bot.send_message(
+                chat_id,
+                "Sorry, I can't send voice messages. Please enable voice messages for everyone in your Telegram privacy settings (Settings -> Privacy and Security -> Voice Messages).",
+                reply_to_message_id=reply_to_message_id
+            )
         raise
 
 def process_llm_response(user_id: str, message_id: str, user_message: str, chat_id: int, reply_to_message_id: int, language: str = 'en') -> None:

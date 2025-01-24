@@ -71,3 +71,32 @@ ngrok http http://localhost:5000
 ```
 sh build_and_run.sh
 ```
+6. To run ngrok as a daemon:
+Edit ngrok config
+```
+mkdir ~/.ngrok2
+nano ~/.ngrok2/ngrok.yml
+```
+Update your token and url as ngrok site provides
+```
+version: "3"
+agent:
+    authtoken: your_token
+endpoints:
+  - name: tts-tunnel
+    url: your_url
+    upstream:
+      url: 5000
+```
+Install ngrok as a service:
+```
+sudo ngrok service install --config ~/.ngrok2/ngrok.yml
+```
+Start the ngrok service:
+```
+ngrok service start
+```
+Check
+```
+sudo systemctl status ngrok
+```

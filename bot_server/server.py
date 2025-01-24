@@ -322,11 +322,11 @@ async def call_message(request: Request, authorization: str = Header(None)):
     message = await request.json()
     logger.info(message)
 
-    if not user_access(message):
-        return JSONResponse(content={
-            "type": "text", 
-            "body": "You are not authorized to use this bot."
-        })
+    # if not user_access(message):
+    #     return JSONResponse(content={
+    #         "type": "text", 
+    #         "body": "You are not authorized to use this bot."
+    #     })
 
     chat_id = message['chat']['id']
     user_id = str(message['from']['id'])

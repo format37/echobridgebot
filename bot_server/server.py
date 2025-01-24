@@ -444,9 +444,13 @@ async def call_message(request: Request, authorization: str = Header(None)):
                         "history": chat_history,
                         "question": transcript
                     })
+
+                    # Replace Chinese language code for compatibility
+                    if detected_language.lower() == "cmn-hans-cn":
+                        detected_language = "zh-cn"
                     
                     bot.edit_message_text(
-                        "`[███  ] Thinking..`".replace('.', '\\.'),
+                        f"`[███  ] [{detected_language}] Thinking..`".replace('.', '\\.'),
                         chat_id=chat_id,
                         message_id=update_id,
                         parse_mode='MarkdownV2'
@@ -466,11 +470,12 @@ async def call_message(request: Request, authorization: str = Header(None)):
                     )
 
                     bot.edit_message_text(
-                        "`[████ ] Voice synthesis..`".replace('.', '\\.'),
+                        f"`[████ ] [{detected_language}] Voice synthesis..`".replace('.', '\\.'),
                         chat_id=chat_id,
                         message_id=update_id,
                         parse_mode='MarkdownV2'
                     )
+                    
                     # Process LLM response
                     process_llm_response(
                         user_id,
@@ -482,7 +487,7 @@ async def call_message(request: Request, authorization: str = Header(None)):
                     )
                     logger.info(f"Voice response sent to user {user_id}")
                     bot.edit_message_text(
-                        f"`[█████] Done in {time.time() - start_time} sec.`".replace('.', '\\.'),
+                        f"`[█████] [{detected_language}] Done in {time.time() - start_time} sec.`".replace('.', '\\.'),
                         chat_id=chat_id,
                         message_id=update_id,
                         parse_mode='MarkdownV2'

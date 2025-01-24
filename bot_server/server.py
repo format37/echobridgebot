@@ -259,6 +259,8 @@ def process_llm_response(user_id: str, message_id: str, user_message: str, chat_
         )
         # Replace dots with newlines in the LLM response
         llm_response = llm_response.replace('.', '\n')
+        # Crop extra spaces and newlines
+        llm_response = llm_response.strip()
 
         # Generate and send voice response
         try:
